@@ -1,0 +1,302 @@
+% --- NAME -----------------------------------------------
+set title "TRIGA"
+
+% --- LIBRARY DEFINITION ---------------------------------
+set acelib "/software/jeff311/sss_jeff311u.xsdata"
+
+% --- MATERIALS -----------------------------------------------
+
+%Positive entries refer to atomic densities (in units of 10^24 /cm3 )
+%and atomic fractions, respectively, and negative entries to mass densities 
+%(in units of g/cm3 ) and mass fractions. Isotopic compositions are normalized 
+%before the calculation and mixed entries are not allowed. 
+
+%If the material density is set to zero or “sum”, the value is calculated from 
+%the isotopic composition. The isotope fractions must then be in absolute density
+%units, not relative fractions.
+
+% --- Cladding
+mat Cladding 	-5.015     rgb 150 150 150
+V-nat.03c 	-0.1
+Cr-nat.03c 	-0.02
+Mn-55.03c 	-0.01
+Fe-nat.03c 	-0.1
+Al-27.03c 	-99.57
+Cu-nat.03c 	-0.1
+Ga-nat.03c 	-0.1
+
+% --- Fuel 
+mat Fuel 	-6.3  moder h_zrh 1001   rgb 255 0 0  %tmp 350 %[density] 	
+Zr-nat.03c 	-91  			%[mass fraction]
+H-1.03c  	-1			%[mass fraction]
+92235.03c 	-1.6			%[mass fraction]
+92238.03c 	-6.4			%[mass fraction]
+
+% --- Water 
+mat Water       -1   moder lw 1001   rgb 0 0 255	%[density]  
+O-16.03c        1					%[atomic fraction]
+H-1.03c         2					%[atomic fraction]
+
+% --- Reflector graphite
+mat Graphite     -2 moder gr 6012 rgb 80 80 80
+C-12.03c          1
+
+% --- Control Rods 
+mat ControlRods  -2.52 moder gr 6012  rgb 0 255 0	%[density] 
+B-11.03c         0.642 					%[atomic fraction]
+B-10.03c         0.158					%[atomic fraction]
+C-12.03c         0.2					%[atomic fraction]
+
+% --- Vacuum  
+mat Vacuum 	-0.001      rgb 230 230 230
+O-16.03c 	-10
+N-14.03c	-90
+
+%-------------------------------------------------------------------------------------
+% --- Thermal scattering data: ZrH, Light Water,graphite
+therm	h_zrh	hzr.30t  % 300K
+%therm	h_zrh	hzr.35t  % 350K
+therm	lw 	lwe6.00t % 296K
+therm 	gr 	grj3.00t % 296K
+
+% --- GEOMETRY -----------------------------------------------
+
+%Definition of the surface (cm)
+
+% cly x0 y0 r;
+% hexxc x0 y0 r;
+% px z0
+
+%The surfaces are used for defining the geometry cells as will be described
+%in the following section. For this purpose, each surface is associated with 
+%a positive side and a negative side.It is defined that a point is inside a
+%surface if it is located on the negative side of the surface.
+
+% --- Geometrical parameters
+surf   1   cyl    0.0    0.0    1.79  %[radius]      %Inner radius Fuel Element
+surf   2   cyl    0.0    0.0    1.88  %[radius]      %Outer radius Cladding
+surf   3   cyl    0.0    0.0    1.905                %Outer Radius Central Channel
+surf   4   cyl	  0.0    0.0    1.425 %[radius]	     %Inner radius SHIM
+surf   5   cyl	  0.0    0.0    1.59  %[radius]	     %Outer Radius SHIM
+surf   6   cyl	  0.0    0.0    0.965 %[radius]	     %Inner radius REG
+surf   7   cyl	  0.0    0.0    1.11  %[radius]	     %Outer Radius REG
+surf   8   cyl    0.0    0.0    1.105 %[radius]	     %Inner radius TRANS
+surf   9   cyl    0.0    0.0    1.27  %[radius]	     %Outer Radius TRANS	
+surf  10    pz    0     %[position] 			     %Start of the active length
+surf  11    pz    35.56 %[position]			     %End of the active length
+surf  12    pz	  45.47 %[length]			     %CR lenght
+
+% --- Geometrical parameters: core + riflettore
+surf   13   cyl    0.0	 0.0   22.85 %[radius]	 %Inner Radius Reflector
+surf   14   cyl    0.0	 0.0   40    %[radius]	 %Outer Radius Reflector 
+surf   15    pz    -50					     %Lower boundary
+surf   16    pz    85					     %Upper boundary
+surf  111   inf				      			 %Infinite surface for XS generation
+
+
+% --- CELLS -----------------------------------------------
+
+%Definition of the cell 
+%the neutron is inside the cell, if and only if it is on the same side of each
+%boundary surface as given in the surface list.The cell shape is determined by
+%the list of boundary surfaces. Positive entries refer to positive (“outside”)
+%surface sides and negative entries to negative (“inside”) surface sides. 
+%The cell is defined as the intersection of all surfaces in the list.
+
+%cell <name> <u0> <mat> <surf 1> <surf 2>
+
+%Pin definition (optional, non si può fare la XS sui vari mat in qst modo)
+%pin <id>
+%<mat 1> <r1>
+%<mat 2> <r2>
+%...
+%<mat n>
+
+%The pin identifier is a universe number, which must not coincide with another
+%universe.
+
+% --- Universe for XS generation
+cell  2    200        Fuel    -111		%Fuel rod 
+cell  3    300       Water    -111		%Water in-core
+cell  4    400 ControlRods    -111		%SHIM
+cell  5    500 ControlRods    -111 		%REG
+cell  6    600	    Vacuum    -111		%Vacuum
+cell  7    700    Graphite    -111		%Graphite (Reflector)
+cell  8    800       Water    -111  	%Water out-core
+cell  9    900    Graphite    -111		%Graphite (Element)
+cell  10   1000   Cladding    -111              %Cladding
+
+% --- Central Channel definition 
+cell  11      1	  fill 600         -1	10 -11	%Vacuum
+cell  12      1	  fill 1000     1  -3	10 -11 	%Cladding
+cell  13      1   fill 300      3       10 -11  %Water in-core
+cell  14      1   fill 800                 -10	%Water out-core (below)
+cell  15      1   fill 800              11 	    %Water out-core (above)
+
+% --- Fuel Element definition
+cell  21      2	  fill 200         -1	10 -11  %Fuel 
+cell  22      2	  fill 1000     1  -2   10 -11	%Cladding
+cell  23      2   fill 300      2       10 -11	%Water in-core
+cell  24      2   fill 800                 -10	%Water out-core (below)
+cell  25      2   fill 800              11      %Water out-core (above)
+
+% --- SHIM definitio
+cell  31      3	  fill 400         -4   10 -12	%SHIM
+cell  32      3	  fill 1000     4  -5   10 -12	%Cladding
+cell  33      3   fill 300      5       10 -12	%Water in-core
+cell  34      3   fill 800                 -10  %Water out-core (below)
+cell  35      3   fill 800         	12	%Water out-core (above)
+
+% --- REG definition
+cell  41      4	  fill 500         -6   10 -12 	%REG
+cell  42      4	  fill 1000     6  -7   10 -12	%Cladding
+cell  43      4   fill 300      7       10 -12	%Water in-core
+cell  44      4   fill 800                 -10  %Water out-core (below)
+cell  45      4   fill 800              12      %Water out-core (above)
+
+% --- TRANS definition 
+cell  51      5	  Water            -8   10 -12 	%TRANS
+cell  52      5	  fill 1000     8  -9   10 -12	%Cladding
+cell  53      5   fill 300      9       10 -12	%Water in-core
+cell  54      5   fill 800                 -10  %Water out-core (below)
+cell  55      5   fill 800              12      %Water out-core (above)
+
+% --- Empty channel definition 
+cell  61      6	  fill 600         -1   10 -11	%Vacuum
+cell  62      6	  fill 1000     1  -2   10 -11	%Cladding
+cell  63      6   fill 300      2       10 -11	%Water in-core
+cell  64      6   fill 800                 -10  %Water out-core (below)
+cell  65      6   fill 800              11      %Water out-core (above)
+
+% --- Graphite channel definition
+cell  71      7	  fill 900         -1   10 -11	%Grafite
+cell  72      7	  fill 1000     1  -2   10 -11	%Cladding
+cell  73      7   fill 300      2       10 -11	%Water in-core
+cell  74      7   fill 800                 -10  %Water out-core (below)
+cell  75      7   fill 800              11      %Water out-core (above)		
+		
+% --- Lattice core definitiion
+%Circular cluster array The circular cluster array (lattice type 4) is defined by:
+%lat <u0> <type> <x0> <y0> <nr>
+%where <u0>   is the universe number of the lattice
+%      <type> is the lattice type (= 4)
+%      <x0>   is the x coordinate of the lattice origin
+%      <y0>   is the y coordinate of the lattice origin
+%      <nr>   is the number of rings in the array
+
+%The lattice card is followed by a list of <nr> rings, which are defined by:
+%<n> <r> <theta> <u1> <u2> ...
+%where  <n>             is the number of sectors in ring
+%       <r>             is the central radius of the ring
+%       <theta>         is the angle of rotation
+%       <u1> <u2> ...   are the universe numbers filling the sectors
+
+
+lat 10  4  0.0  0.0  6
+%[n1]    %[r1]   %[theta1]   %[u1_1] %[u1_2]
+1          0         0          1
+6          4.2       30         2 2 2 2 2 2
+12         8.15      30         3 2 2 2 2 2 2 2 2 2 2 2
+18         12.15     270        5 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 
+24         16.33     150        4 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+30         20.34     54         6 7 7 7 7 7 2 2 2 2 6 7 7 7 7 7 7 7 7 7 7 7 7 6 7 7 7 7 7 7
+				
+
+
+
+% --- Core definition
+cell   101     11   fill 10             -13  15 -16   %Core -> filled with universe 10 (=lattice)
+cell   102     11   fill 700         13 -14  15 -16   %Radial reflector
+cell   103      0   fill 11             -14  15 -16   %Reactor -> filled with universe 11 (=core+reflector)
+cell   104      0   outside           	        -15   %Outside (below the reactor)
+cell   105      0   outside          	     16       %Outside (above the reactor)
+cell   106      0   outside          14      15 -16   %Outside (beyond the refletor, radially)
+
+% -- Control Rod movement
+trans 3 0 0 +20		%SHIM position
+trans 4 0 0  -4 	%REG in
+%trans 4 0 0  +34	%REG out
+%trans 4 0 0  31	%REG calibration
+
+
+% --- BOUNDARY CONDITIONS -----------------------------------------------
+%Boundary condition for outside. The Serpent code has three available boundary 
+%condition options: 1 - black, 2 - reflective and 3 - periodic.
+set bc 1 %[option]
+
+% --- NEUTRON POPULATION AND CRITICAL CYCLES --------------
+
+	%set pop <npop> <cycles> <skip> [<keff0> <int>]
+	%npop=# neutrons per cycle, cycles=# active cycles, skip=# inactive cycle
+
+	%Inactive cycles are cycles that are run in order to allow the initial fission 
+	%source distribution to converge before starting to collect the results. In 
+	%lattice calculations the convergence is typically reached well within the first 20
+	%cycles. Source convergence in full-core calculations may take much longer(50-100).
+
+	%The statistical accuracy of the results depends on the total number of active neutron
+	%histories run, which is determined by the population size per cycle and the total 
+	%number of active cycles. Appropriate values for a typical lattice calculation are 500 
+	%active cycles of 5000 source neutrons. If more precision is required or the geometry 
+	%is larger, it is suggested that the population size, rather than the number of cycles 
+	%is increased.
+
+set pop 100000 300 200 %[n_pop] %[n_active_cycle] %[n_inactive_cycle]
+
+
+% --- NORMALIZATION (FLUX/POWER) --------------
+%The integral reaction rate estimates given by a Monte Carlo simulation are more or less
+%arbitrarily normalized, unless fixed by a given constant.Normalization to total flux is
+%set using: set flux <flx> or set power <P> (W) or set powdens <powdens> (kW/kgU) 
+%The total heating power includes all heat generated in the system. If the geometry is two-
+%dimensional, the value is the linear power in W/cm. 
+  set power 10 
+
+% --- XS GENERATION
+%        universes for which I want the group constants
+set gcu             200 300 400 500 700 1000
+
+% ---Energy group for XS generation (boundary in [MeV])
+%         number of groups       energy boundary between them
+set nfg          2                       0.625e-6	
+
+% --- UNRESOLVED RESONANCES ----------------------------
+	%set ures <use>   1=use data 0= negelct data
+
+	%Sets unresolved resonance probability table sampling on or off. Input values:
+
+set ures 1
+
+% --- PLOT -----------------------------------------------
+%plot <or> <nx> <ny> [<p> <min1> <max1> <min2> <max2>]
+%or=1,2,3 (x,y,z)
+%The plotted area is a rectangle defined by the orientation, the position on
+%the perpendicular coordinate axis and the coordinates of the two corners
+
+% --- Geometry and mesh plots:
+plot 1 2000 2000 [ 0.0  -45 45  -60  95] 	%plane yz
+plot 3 2000 2000 [18.0  -45 45  -45  45]	%plane xy
+plot 3 2000 2000 [40.0  -45 45  -45  45]	%plane xy
+mesh 3 2000 2000 
+mesh 1 2000 2000
+
+
+% --- Energy plot -----------------------------------------
+	%Surface current detector det <name> ds <surf> <dir> (-1=inward,1=outward)
+
+	% --- Detector for tallying the flux energy spectrum
+	%     The energy grid used for tallying will be defined later
+
+	det EnergyDetector de MyEnergyGrid
+
+	% --- Define the energy grid to be used with the detector
+	%     Grid type 3 (bins have uniform lethargy width)
+	%     500 bins between 1e-11 MeV and 2e1 MeV.
+
+	ene MyEnergyGrid 3 500 1e-11 2e1
+
+% --- XS plot ---------------------------------------------
+
+set xsplot  71 1e-11 2e1
+
+
