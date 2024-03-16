@@ -4,3 +4,5 @@ An analysis of TRIGA reactor through Serpent code was carried out, comparing num
 - effective delayed neutron fraction
 - control rod calibration curve
 - reactivity feedback coefficients
+
+The input file for Serpent and the final report are provided
