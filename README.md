@@ -5,4 +5,4 @@ An analysis of TRIGA reactor through Serpent code was carried out, comparing num
 - control rod calibration curve
 - reactivity feedback coefficients
 
-The input file for Serpent and the final report are provided
+The input file for Serpent, the post-processing matlab scripts and the final report are provided
